@@ -943,7 +943,7 @@
                 <!-- Action Buttons -->
                 <div class="action-buttons" style="margin: 2rem 0;">
                     <a href="https://www.cochranfilms.com/pricing" class="cta-button" style="margin: 0 1rem;">PRICING</a>
-                    <button type="submit" form="bookingForm" class="cta-button form-submit-btn" style="margin: 0 1rem;">BOOK NOW</button>
+                                                <button type="submit" form="bookingForm" class="cta-button form-submit-btn" style="margin: 0 1rem;" onclick="event.stopImmediatePropagation();">BOOK NOW</button>
                 </div>
                 <p style="font-size: 1rem; opacity: 0.8;">Available for projects worldwide • Atlanta based • Remote friendly</p>
             </div>
@@ -988,12 +988,24 @@
         }
 
         function changeSlide(n) {
+            // Don't change slides if form is being submitted
+            const submitBtn = document.querySelector('.form-submit-btn');
+            if (submitBtn && submitBtn.getAttribute('data-submitting') === 'true') {
+                return;
+            }
+            
             slideIndex += n;
             showSlide(slideIndex);
             resetAutoSlide();
         }
 
         function currentSlide(n) {
+            // Don't change slides if form is being submitted
+            const submitBtn = document.querySelector('.form-submit-btn');
+            if (submitBtn && submitBtn.getAttribute('data-submitting') === 'true') {
+                return;
+            }
+            
             slideIndex = n;
             showSlide(slideIndex);
             resetAutoSlide();
@@ -1167,7 +1179,17 @@
                         e.stopImmediatePropagation();
                         
                         // Prevent any slide navigation
-                        e.target.setAttribute('data-submitting', 'true');
+                        const submitBtn = e.target;
+                        submitBtn.setAttribute('data-submitting', 'true');
+                        
+                        // Disable all navigation temporarily
+                        const navDots = document.querySelectorAll('.nav-dot');
+                        const prevBtn = document.querySelector('.prev');
+                        const nextBtn = document.querySelector('.next');
+                        
+                        navDots.forEach(dot => dot.style.pointerEvents = 'none');
+                        if (prevBtn) prevBtn.style.pointerEvents = 'none';
+                        if (nextBtn) nextBtn.style.pointerEvents = 'none';
                         
                         // Rate limiting check
                         if (!SecurityUtils.rateLimiter.canSubmit()) {
@@ -1252,6 +1274,15 @@
                                     submitBtn.disabled = false;
                                     submitBtn.style.background = '';
                                     submitBtn.removeAttribute('data-submitting');
+                                    
+                                    // Re-enable navigation
+                                    const navDots = document.querySelectorAll('.nav-dot');
+                                    const prevBtn = document.querySelector('.prev');
+                                    const nextBtn = document.querySelector('.next');
+                                    
+                                    navDots.forEach(dot => dot.style.pointerEvents = 'auto');
+                                    if (prevBtn) prevBtn.style.pointerEvents = 'auto';
+                                    if (nextBtn) nextBtn.style.pointerEvents = 'auto';
                                 }, 3000);
                             })
                             .catch(function(error) {
@@ -1267,6 +1298,15 @@
                                 setTimeout(() => {
                                     submitBtn.textContent = originalText;
                                     submitBtn.removeAttribute('data-submitting');
+                                    
+                                    // Re-enable navigation
+                                    const navDots = document.querySelectorAll('.nav-dot');
+                                    const prevBtn = document.querySelector('.prev');
+                                    const nextBtn = document.querySelector('.next');
+                                    
+                                    navDots.forEach(dot => dot.style.pointerEvents = 'auto');
+                                    if (prevBtn) prevBtn.style.pointerEvents = 'auto';
+                                    if (nextBtn) nextBtn.style.pointerEvents = 'auto';
                                 }, 3000);
                             });
                     }
@@ -1282,6 +1322,15 @@
                     
                     // Also handle form submission directly
                     bookingForm.addEventListener('submit', handleFormSubmit, true);
+                    
+                    // Prevent any other event listeners from interfering
+                    submitBtn.addEventListener('click', function(e) {
+                        e.stopImmediatePropagation();
+                    }, true);
+                    
+                    bookingForm.addEventListener('submit', function(e) {
+                        e.stopImmediatePropagation();
+                    }, true);
                     
                     // Ensure form is properly connected
                     console.log('EmailJS form initialized successfully');
