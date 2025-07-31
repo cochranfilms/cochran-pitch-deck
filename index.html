@@ -800,7 +800,7 @@
         <div class="slide" style="background-image: url('Din Perlis - Crash Zoom.gif');">
             <div class="slide-overlay">
                 <h2>CINEMATIC VIDEOGRAPHY</h2>
-                <p>From corporate documentaries to professional podcasts, we craft visual narratives that captivate audiences and drive engagement. Our team combines technical expertise with creative vision to deliver content that moves both hearts and metrics.</p>
+                <p>From corporate documentaries to artistic music videos, we craft visual narratives that captivate audiences and drive engagement. Our team combines technical expertise with creative vision to deliver content that moves both hearts and metrics.</p>
                 <div class="stats">
                     <div class="stat">
                         <div class="stat-number">4K</div>
@@ -1151,235 +1151,262 @@
                 // Check if EmailJS is loaded securely
                 console.log('Checking EmailJS availability...');
                 console.log('EmailJS object:', typeof emailjs);
+                console.log('EmailJS object details:', emailjs);
                 
-                if (typeof emailjs === 'undefined') {
-                    console.error('EmailJS not loaded - will use fallback');
-                    // Set up fallback form handling
-                    const submitBtn = document.querySelector('.form-submit-btn');
-                    if (submitBtn) {
-                        submitBtn.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            alert('Email service temporarily unavailable. Please contact us directly at info@cochranfilms.com');
+                // Function to initialize EmailJS
+                function initializeEmailJS() {
+                    try {
+                        // Initialize EmailJS with secure configuration
+                        console.log('Initializing EmailJS...');
+                        emailjs.init('p4pF3OWvh-DXtae4c');
+                        console.log('EmailJS initialized successfully');
+                        
+                        // Test EmailJS connection
+                        console.log('Testing EmailJS connection...');
+                        emailjs.send('service_t11yvru', 'template_aluwel1', {
+                            test: 'connection_test',
+                            timestamp: new Date().toISOString()
+                        }).then(function(response) {
+                            console.log('EmailJS connection successful:', response);
+                        }).catch(function(error) {
+                            console.error('EmailJS connection failed:', error);
+                            console.error('Error details:', {
+                                status: error.status,
+                                text: error.text,
+                                message: error.message
+                            });
+                            // Don't disable form on connection test failure
                         });
+                        
+                        const bookingForm = document.getElementById('bookingForm');
+                        if (bookingForm) {
+                            console.log('Booking form found, setting up...');
+                            // Add form token for CSRF protection
+                            const formToken = SecurityUtils.generateFormToken();
+                            const tokenInput = document.createElement('input');
+                            tokenInput.type = 'hidden';
+                            tokenInput.name = 'form_token';
+                            tokenInput.value = formToken;
+                            bookingForm.appendChild(tokenInput);
+                            
+                            // Secure form submission - Support both click and touch events for mobile
+                            const submitBtn = document.querySelector('.form-submit-btn');
+                            
+                            function handleFormSubmit(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
+                                
+                                // Prevent any slide navigation
+                                const submitBtn = e.target;
+                                if (submitBtn.getAttribute('data-submitting') === 'true') {
+                                    return; // Already submitting
+                                }
+                                submitBtn.setAttribute('data-submitting', 'true');
+                                
+                                // Disable all navigation temporarily
+                                const navDots = document.querySelectorAll('.nav-dot');
+                                const prevBtn = document.querySelector('.prev');
+                                const nextBtn = document.querySelector('.next');
+                                
+                                navDots.forEach(dot => dot.style.pointerEvents = 'none');
+                                if (prevBtn) prevBtn.style.pointerEvents = 'none';
+                                if (nextBtn) nextBtn.style.pointerEvents = 'none';
+                                
+                                // Rate limiting check
+                                if (!SecurityUtils.rateLimiter.canSubmit()) {
+                                    alert('Please wait before submitting again.');
+                                    return;
+                                }
+                                
+                                const originalText = submitBtn.textContent;
+                                
+                                // Get and sanitize inputs
+                                const nameInput = document.getElementById('name');
+                                const emailInput = document.getElementById('email');
+                                const phoneInput = document.getElementById('phone');
+                                const notesInput = document.getElementById('notes');
+                                
+                                const name = SecurityUtils.sanitizeInput(nameInput.value);
+                                const email = SecurityUtils.sanitizeInput(emailInput.value);
+                                const phone = SecurityUtils.sanitizeInput(phoneInput.value);
+                                const notes = SecurityUtils.sanitizeInput(notesInput.value);
+                                
+                                // Enhanced validation
+                                if (!name || name.length < 2 || name.length > 100) {
+                                    alert('Please enter a valid name (2-100 characters).');
+                                    nameInput.focus();
+                                    return;
+                                }
+                                
+                                if (!email || !SecurityUtils.validateEmail(email)) {
+                                    alert('Please enter a valid email address.');
+                                    emailInput.focus();
+                                    return;
+                                }
+                                
+                                if (phone && phone.length > 20) {
+                                    alert('Phone number too long.');
+                                    phoneInput.focus();
+                                    return;
+                                }
+                                
+                                if (notes && notes.length > 1000) {
+                                    alert('Message too long (max 1000 characters).');
+                                    notesInput.focus();
+                                    return;
+                                }
+                                
+                                // Show secure loading state
+                                submitBtn.textContent = 'Sending...';
+                                submitBtn.disabled = true;
+                                
+                                // Prepare secure template parameters
+                                const templateParams = {
+                                    name: name,
+                                    email: email,
+                                    phone: phone || 'Not provided',
+                                    notes: notes || 'No additional notes',
+                                    form_token: formToken,
+                                    timestamp: new Date().toISOString(),
+                                    user_agent: navigator.userAgent.substring(0, 100) // Limited for security
+                                };
+                                
+                                // Secure EmailJS submission with timeout
+                                console.log('Sending EmailJS with params:', templateParams);
+                                console.log('Service ID:', 'service_t11yvru');
+                                console.log('Template ID:', 'template_aluwel1');
+                                
+                                const sendPromise = emailjs.send('service_t11yvru', 'template_aluwel1', templateParams);
+                                const timeoutPromise = new Promise((_, reject) => 
+                                    setTimeout(() => reject(new Error('Timeout')), 10000)
+                                );
+                                
+                                // Add debugging for form submission
+                                console.log('Form submission started');
+                                console.log('EmailJS initialized:', typeof emailjs !== 'undefined');
+                                
+                                Promise.race([sendPromise, timeoutPromise])
+                                    .then(function(response) {
+                                        // Success state
+                                        console.log('EmailJS success:', response);
+                                        submitBtn.textContent = 'Sent!';
+                                        submitBtn.style.background = 'linear-gradient(135deg, #00ff88, #ffffff, #00ff88)';
+                                        bookingForm.reset();
+                                        
+                                        // Generate new token for next submission
+                                        tokenInput.value = SecurityUtils.generateFormToken();
+                                        
+                                        // Reset button after 3 seconds
+                                        setTimeout(() => {
+                                            submitBtn.textContent = originalText;
+                                            submitBtn.disabled = false;
+                                            submitBtn.style.background = '';
+                                            submitBtn.removeAttribute('data-submitting');
+                                            
+                                            // Re-enable navigation
+                                            const navDots = document.querySelectorAll('.nav-dot');
+                                            const prevBtn = document.querySelector('.prev');
+                                            const nextBtn = document.querySelector('.next');
+                                            
+                                            navDots.forEach(dot => dot.style.pointerEvents = 'auto');
+                                            if (prevBtn) prevBtn.style.pointerEvents = 'auto';
+                                            if (nextBtn) nextBtn.style.pointerEvents = 'auto';
+                                        }, 3000);
+                                    })
+                                    .catch(function(error) {
+                                        // Secure error handling
+                                        console.error('EmailJS error:', error);
+                                        submitBtn.textContent = 'Try Again';
+                                        submitBtn.disabled = false;
+                                        
+                                        // Provide more specific error feedback
+                                        let errorMessage = 'Unable to send message. Please try again or contact us directly at info@cochranfilms.com';
+                                        if (error.message === 'Timeout') {
+                                            errorMessage = 'Request timed out. Please check your connection and try again.';
+                                        } else if (error.status === 0) {
+                                            errorMessage = 'Network error. Please check your internet connection and try again.';
+                                        } else if (error.status === 400) {
+                                            errorMessage = 'Invalid service or template configuration. Please contact us directly at info@cochranfilms.com';
+                                        } else if (error.status === 401) {
+                                            errorMessage = 'Authentication failed. Please contact us directly at info@cochranfilms.com';
+                                        }
+                                        alert(errorMessage);
+                                        
+                                        // Reset button after 3 seconds
+                                        setTimeout(() => {
+                                            submitBtn.textContent = originalText;
+                                            submitBtn.removeAttribute('data-submitting');
+                                            
+                                            // Re-enable navigation
+                                            const navDots = document.querySelectorAll('.nav-dot');
+                                            const prevBtn = document.querySelector('.prev');
+                                            const nextBtn = document.querySelector('.next');
+                                            
+                                            navDots.forEach(dot => dot.style.pointerEvents = 'auto');
+                                            if (prevBtn) prevBtn.style.pointerEvents = 'auto';
+                                            if (nextBtn) nextBtn.style.pointerEvents = 'auto';
+                                        }, 3000);
+                                    });
+                            }
+                            
+                            // Add multiple event listeners for mobile compatibility
+                            submitBtn.addEventListener('click', handleFormSubmit, true);
+                            submitBtn.addEventListener('touchend', handleFormSubmit, true);
+                            submitBtn.addEventListener('touchstart', function(e) {
+                                e.preventDefault(); // Prevent double submission
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
+                            }, true);
+                            
+                            // Also handle form submission directly
+                            bookingForm.addEventListener('submit', handleFormSubmit, true);
+                            
+                            // Prevent form from submitting normally
+                            bookingForm.addEventListener('submit', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
+                            }, true);
+                            
+                            // Ensure form is properly connected
+                            console.log('EmailJS form initialized successfully');
+                        }
+                    } catch (error) {
+                        console.error('EmailJS initialization error:', error);
+                        // Set up fallback
+                        const submitBtn = document.querySelector('.form-submit-btn');
+                        if (submitBtn) {
+                            submitBtn.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                alert('Email service temporarily unavailable. Please contact us directly at info@cochranfilms.com');
+                            });
+                        }
                     }
-                    return;
                 }
                 
-                // Initialize EmailJS with secure configuration
-                console.log('Initializing EmailJS...');
-                emailjs.init('p4pF3OWvh-DXtae4c');
-                console.log('EmailJS initialized successfully');
-                
-                // Test EmailJS connection
-                console.log('Testing EmailJS connection...');
-                emailjs.send('service_t11yvru', 'template_aluwel1', {
-                    test: 'connection_test',
-                    timestamp: new Date().toISOString()
-                }).then(function(response) {
-                    console.log('EmailJS connection successful:', response);
-                }).catch(function(error) {
-                    console.error('EmailJS connection failed:', error);
-                    console.error('Error details:', {
-                        status: error.status,
-                        text: error.text,
-                        message: error.message
-                    });
-                    // Don't disable form on connection test failure
-                });
-                
-                const bookingForm = document.getElementById('bookingForm');
-                if (bookingForm) {
-                    console.log('Booking form found, setting up...');
-                    // Add form token for CSRF protection
-                    const formToken = SecurityUtils.generateFormToken();
-                    const tokenInput = document.createElement('input');
-                    tokenInput.type = 'hidden';
-                    tokenInput.name = 'form_token';
-                    tokenInput.value = formToken;
-                    bookingForm.appendChild(tokenInput);
-                    
-                    // Secure form submission - Support both click and touch events for mobile
-                    const submitBtn = document.querySelector('.form-submit-btn');
-                    
-                    function handleFormSubmit(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        
-                        // Prevent any slide navigation
-                        const submitBtn = e.target;
-                        if (submitBtn.getAttribute('data-submitting') === 'true') {
-                            return; // Already submitting
+                // Check if EmailJS is available immediately
+                if (typeof emailjs === 'undefined') {
+                    console.log('EmailJS not immediately available, waiting...');
+                    setTimeout(() => {
+                        if (typeof emailjs === 'undefined') {
+                            console.error('EmailJS not loaded after waiting - will use fallback');
+                            // Set up fallback form handling
+                            const submitBtn = document.querySelector('.form-submit-btn');
+                            if (submitBtn) {
+                                submitBtn.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    alert('Email service temporarily unavailable. Please contact us directly at info@cochranfilms.com');
+                                });
+                            }
+                        } else {
+                            console.log('EmailJS loaded after waiting, initializing...');
+                            initializeEmailJS();
                         }
-                        submitBtn.setAttribute('data-submitting', 'true');
-                        
-                        // Disable all navigation temporarily
-                        const navDots = document.querySelectorAll('.nav-dot');
-                        const prevBtn = document.querySelector('.prev');
-                        const nextBtn = document.querySelector('.next');
-                        
-                        navDots.forEach(dot => dot.style.pointerEvents = 'none');
-                        if (prevBtn) prevBtn.style.pointerEvents = 'none';
-                        if (nextBtn) nextBtn.style.pointerEvents = 'none';
-                        
-                        // Rate limiting check
-                        if (!SecurityUtils.rateLimiter.canSubmit()) {
-                            alert('Please wait before submitting again.');
-                            return;
-                        }
-                        
-                        const originalText = submitBtn.textContent;
-                        
-                        // Get and sanitize inputs
-                        const nameInput = document.getElementById('name');
-                        const emailInput = document.getElementById('email');
-                        const phoneInput = document.getElementById('phone');
-                        const notesInput = document.getElementById('notes');
-                        
-                        const name = SecurityUtils.sanitizeInput(nameInput.value);
-                        const email = SecurityUtils.sanitizeInput(emailInput.value);
-                        const phone = SecurityUtils.sanitizeInput(phoneInput.value);
-                        const notes = SecurityUtils.sanitizeInput(notesInput.value);
-                        
-                        // Enhanced validation
-                        if (!name || name.length < 2 || name.length > 100) {
-                            alert('Please enter a valid name (2-100 characters).');
-                            nameInput.focus();
-                            return;
-                        }
-                        
-                        if (!email || !SecurityUtils.validateEmail(email)) {
-                            alert('Please enter a valid email address.');
-                            emailInput.focus();
-                            return;
-                        }
-                        
-                        if (phone && phone.length > 20) {
-                            alert('Phone number too long.');
-                            phoneInput.focus();
-                            return;
-                        }
-                        
-                        if (notes && notes.length > 1000) {
-                            alert('Message too long (max 1000 characters).');
-                            notesInput.focus();
-                            return;
-                        }
-                        
-                        // Show secure loading state
-                        submitBtn.textContent = 'Sending...';
-                        submitBtn.disabled = true;
-                        
-                        // Prepare secure template parameters
-                        const templateParams = {
-                            name: name,
-                            email: email,
-                            phone: phone || 'Not provided',
-                            notes: notes || 'No additional notes',
-                            form_token: formToken,
-                            timestamp: new Date().toISOString(),
-                            user_agent: navigator.userAgent.substring(0, 100) // Limited for security
-                        };
-                        
-                        // Secure EmailJS submission with timeout
-                        console.log('Sending EmailJS with params:', templateParams);
-                        console.log('Service ID:', 'service_t11yvru');
-                        console.log('Template ID:', 'template_aluwel1');
-                        
-                        const sendPromise = emailjs.send('service_t11yvru', 'template_aluwel1', templateParams);
-                        const timeoutPromise = new Promise((_, reject) => 
-                            setTimeout(() => reject(new Error('Timeout')), 10000)
-                        );
-                        
-                        // Add debugging for form submission
-                        console.log('Form submission started');
-                        console.log('EmailJS initialized:', typeof emailjs !== 'undefined');
-                        
-                        Promise.race([sendPromise, timeoutPromise])
-                            .then(function(response) {
-                                // Success state
-                                console.log('EmailJS success:', response);
-                                submitBtn.textContent = 'Sent!';
-                                submitBtn.style.background = 'linear-gradient(135deg, #00ff88, #ffffff, #00ff88)';
-                                bookingForm.reset();
-                                
-                                // Generate new token for next submission
-                                tokenInput.value = SecurityUtils.generateFormToken();
-                                
-                                // Reset button after 3 seconds
-                                setTimeout(() => {
-                                    submitBtn.textContent = originalText;
-                                    submitBtn.disabled = false;
-                                    submitBtn.style.background = '';
-                                    submitBtn.removeAttribute('data-submitting');
-                                    
-                                    // Re-enable navigation
-                                    const navDots = document.querySelectorAll('.nav-dot');
-                                    const prevBtn = document.querySelector('.prev');
-                                    const nextBtn = document.querySelector('.next');
-                                    
-                                    navDots.forEach(dot => dot.style.pointerEvents = 'auto');
-                                    if (prevBtn) prevBtn.style.pointerEvents = 'auto';
-                                    if (nextBtn) nextBtn.style.pointerEvents = 'auto';
-                                }, 3000);
-                            })
-                            .catch(function(error) {
-                                // Secure error handling
-                                console.error('EmailJS error:', error);
-                                submitBtn.textContent = 'Try Again';
-                                submitBtn.disabled = false;
-                                
-                                                        // Provide more specific error feedback
-                        let errorMessage = 'Unable to send message. Please try again or contact us directly at info@cochranfilms.com';
-                        if (error.message === 'Timeout') {
-                            errorMessage = 'Request timed out. Please check your connection and try again.';
-                        } else if (error.status === 0) {
-                            errorMessage = 'Network error. Please check your internet connection and try again.';
-                        } else if (error.status === 400) {
-                            errorMessage = 'Invalid service or template configuration. Please contact us directly at info@cochranfilms.com';
-                        } else if (error.status === 401) {
-                            errorMessage = 'Authentication failed. Please contact us directly at info@cochranfilms.com';
-                        }
-                        alert(errorMessage);
-                                
-                                // Reset button after 3 seconds
-                                setTimeout(() => {
-                                    submitBtn.textContent = originalText;
-                                    submitBtn.removeAttribute('data-submitting');
-                                    
-                                    // Re-enable navigation
-                                    const navDots = document.querySelectorAll('.nav-dot');
-                                    const prevBtn = document.querySelector('.prev');
-                                    const nextBtn = document.querySelector('.next');
-                                    
-                                    navDots.forEach(dot => dot.style.pointerEvents = 'auto');
-                                    if (prevBtn) prevBtn.style.pointerEvents = 'auto';
-                                    if (nextBtn) nextBtn.style.pointerEvents = 'auto';
-                                }, 3000);
-                            });
-                    }
-                    
-                    // Add multiple event listeners for mobile compatibility
-                    submitBtn.addEventListener('click', handleFormSubmit, true);
-                    submitBtn.addEventListener('touchend', handleFormSubmit, true);
-                    submitBtn.addEventListener('touchstart', function(e) {
-                        e.preventDefault(); // Prevent double submission
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                    }, true);
-                    
-                    // Also handle form submission directly
-                    bookingForm.addEventListener('submit', handleFormSubmit, true);
-                    
-                    // Prevent form from submitting normally
-                    bookingForm.addEventListener('submit', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                    }, true);
-                    
-                    // Ensure form is properly connected
-                    console.log('EmailJS form initialized successfully');
+                    }, 2000); // Wait 2 seconds
+                } else {
+                    console.log('EmailJS loaded immediately, initializing...');
+                    initializeEmailJS();
                 }
             } catch (error) {
                 // Secure error handling for initialization
