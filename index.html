@@ -943,7 +943,7 @@
                 <!-- Action Buttons -->
                 <div class="action-buttons" style="margin: 2rem 0;">
                     <a href="https://www.cochranfilms.com/pricing" class="cta-button" style="margin: 0 1rem;">PRICING</a>
-                    <button type="submit" form="bookingForm" class="cta-button form-submit-btn" style="margin: 0 1rem;">BOOK NOW</button>
+                    <button type="button" class="cta-button form-submit-btn" style="margin: 0 1rem;">BOOK NOW</button>
                 </div>
                 <p style="font-size: 1rem; opacity: 0.8;">Available for projects worldwide • Atlanta based • Remote friendly</p>
             </div>
@@ -1161,26 +1161,15 @@
                         emailjs.init('p4pF3OWvh-DXtae4c');
                         console.log('EmailJS initialized successfully');
                         
-                        // Test EmailJS connection
-                        console.log('Testing EmailJS connection...');
-                        emailjs.send('service_t11yvru', 'template_aluwel1', {
-                            test: 'connection_test',
-                            timestamp: new Date().toISOString()
-                        }).then(function(response) {
-                            console.log('EmailJS connection successful:', response);
-                        }).catch(function(error) {
-                            console.error('EmailJS connection failed:', error);
-                            console.error('Error details:', {
-                                status: error.status,
-                                text: error.text,
-                                message: error.message
-                            });
-                            // Don't disable form on connection test failure
-                        });
+                        // EmailJS initialized successfully
+                        console.log('EmailJS ready for form submissions');
                         
                         const bookingForm = document.getElementById('bookingForm');
-                        if (bookingForm) {
-                            console.log('Booking form found, setting up...');
+                        const submitBtn = document.querySelector('.form-submit-btn');
+                        console.log('Booking form found:', bookingForm);
+                        console.log('Submit button found:', submitBtn);
+                        if (bookingForm && submitBtn) {
+                            console.log('Booking form and submit button found, setting up...');
                             // Add form token for CSRF protection
                             const formToken = SecurityUtils.generateFormToken();
                             const tokenInput = document.createElement('input');
@@ -1195,11 +1184,14 @@
                             function handleFormSubmit(e) {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                e.stopImmediatePropagation();
+                                
+                                console.log('Form submission handler triggered');
                                 
                                 // Prevent any slide navigation
                                 const submitBtn = e.target;
+                                console.log('Submit button clicked:', submitBtn);
                                 if (submitBtn.getAttribute('data-submitting') === 'true') {
+                                    console.log('Already submitting, returning');
                                     return; // Already submitting
                                 }
                                 submitBtn.setAttribute('data-submitting', 'true');
@@ -1276,6 +1268,7 @@
                                 console.log('Sending EmailJS with params:', templateParams);
                                 console.log('Service ID:', 'service_t11yvru');
                                 console.log('Template ID:', 'template_aluwel1');
+                                console.log('EmailJS object:', emailjs);
                                 
                                 const sendPromise = emailjs.send('service_t11yvru', 'template_aluwel1', templateParams);
                                 const timeoutPromise = new Promise((_, reject) => 
@@ -1285,6 +1278,7 @@
                                 // Add debugging for form submission
                                 console.log('Form submission started');
                                 console.log('EmailJS initialized:', typeof emailjs !== 'undefined');
+                                console.log('About to send EmailJS request...');
                                 
                                 Promise.race([sendPromise, timeoutPromise])
                                     .then(function(response) {
@@ -1350,24 +1344,17 @@
                                     });
                             }
                             
-                            // Add multiple event listeners for mobile compatibility
-                            submitBtn.addEventListener('click', handleFormSubmit, true);
-                            submitBtn.addEventListener('touchend', handleFormSubmit, true);
-                            submitBtn.addEventListener('touchstart', function(e) {
-                                e.preventDefault(); // Prevent double submission
-                                e.stopPropagation();
-                                e.stopImmediatePropagation();
-                            }, true);
-                            
-                            // Also handle form submission directly
-                            bookingForm.addEventListener('submit', handleFormSubmit, true);
+                            // Add event listeners for the submit button
+                            console.log('Setting up form submit button event listeners for button:', submitBtn);
+                            submitBtn.addEventListener('click', handleFormSubmit);
+                            submitBtn.addEventListener('touchend', handleFormSubmit);
                             
                             // Prevent form from submitting normally
                             bookingForm.addEventListener('submit', function(e) {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                e.stopImmediatePropagation();
-                            }, true);
+                                return false;
+                            });
                             
                             // Ensure form is properly connected
                             console.log('EmailJS form initialized successfully');
@@ -1379,6 +1366,7 @@
                         if (submitBtn) {
                             submitBtn.addEventListener('click', function(e) {
                                 e.preventDefault();
+                                e.stopPropagation();
                                 alert('Email service temporarily unavailable. Please contact us directly at info@cochranfilms.com');
                             });
                         }
@@ -1396,6 +1384,7 @@
                             if (submitBtn) {
                                 submitBtn.addEventListener('click', function(e) {
                                     e.preventDefault();
+                                    e.stopPropagation();
                                     alert('Email service temporarily unavailable. Please contact us directly at info@cochranfilms.com');
                                 });
                             }
