@@ -1149,6 +1149,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 // Check if EmailJS is loaded securely
+                console.log('Checking EmailJS availability...');
+                console.log('EmailJS object:', typeof emailjs);
+                
                 if (typeof emailjs === 'undefined') {
                     console.error('EmailJS not loaded - will use fallback');
                     // Set up fallback form handling
@@ -1163,21 +1166,30 @@
                 }
                 
                 // Initialize EmailJS with secure configuration
+                console.log('Initializing EmailJS...');
                 emailjs.init('p4pF3OWvh-DXtae4c');
+                console.log('EmailJS initialized successfully');
                 
                 // Test EmailJS connection
+                console.log('Testing EmailJS connection...');
                 emailjs.send('service_t11yvru', 'template_aluwel1', {
                     test: 'connection_test',
                     timestamp: new Date().toISOString()
                 }).then(function(response) {
-                    console.log('EmailJS connection successful');
+                    console.log('EmailJS connection successful:', response);
                 }).catch(function(error) {
                     console.error('EmailJS connection failed:', error);
+                    console.error('Error details:', {
+                        status: error.status,
+                        text: error.text,
+                        message: error.message
+                    });
                     // Don't disable form on connection test failure
                 });
                 
                 const bookingForm = document.getElementById('bookingForm');
                 if (bookingForm) {
+                    console.log('Booking form found, setting up...');
                     // Add form token for CSRF protection
                     const formToken = SecurityUtils.generateFormToken();
                     const tokenInput = document.createElement('input');
@@ -1271,6 +1283,9 @@
                         
                         // Secure EmailJS submission with timeout
                         console.log('Sending EmailJS with params:', templateParams);
+                        console.log('Service ID:', 'service_t11yvru');
+                        console.log('Template ID:', 'template_aluwel1');
+                        
                         const sendPromise = emailjs.send('service_t11yvru', 'template_aluwel1', templateParams);
                         const timeoutPromise = new Promise((_, reject) => 
                             setTimeout(() => reject(new Error('Timeout')), 10000)
@@ -1279,8 +1294,6 @@
                         // Add debugging for form submission
                         console.log('Form submission started');
                         console.log('EmailJS initialized:', typeof emailjs !== 'undefined');
-                        console.log('Service ID:', 'service_t11yvru');
-                        console.log('Template ID:', 'template_aluwel1');
                         
                         Promise.race([sendPromise, timeoutPromise])
                             .then(function(response) {
@@ -1316,14 +1329,18 @@
                                 submitBtn.textContent = 'Try Again';
                                 submitBtn.disabled = false;
                                 
-                                // Provide more specific error feedback
-                                let errorMessage = 'Unable to send message. Please try again or contact us directly at info@cochranfilms.com';
-                                if (error.message === 'Timeout') {
-                                    errorMessage = 'Request timed out. Please check your connection and try again.';
-                                } else if (error.status === 0) {
-                                    errorMessage = 'Network error. Please check your internet connection and try again.';
-                                }
-                                alert(errorMessage);
+                                                        // Provide more specific error feedback
+                        let errorMessage = 'Unable to send message. Please try again or contact us directly at info@cochranfilms.com';
+                        if (error.message === 'Timeout') {
+                            errorMessage = 'Request timed out. Please check your connection and try again.';
+                        } else if (error.status === 0) {
+                            errorMessage = 'Network error. Please check your internet connection and try again.';
+                        } else if (error.status === 400) {
+                            errorMessage = 'Invalid service or template configuration. Please contact us directly at info@cochranfilms.com';
+                        } else if (error.status === 401) {
+                            errorMessage = 'Authentication failed. Please contact us directly at info@cochranfilms.com';
+                        }
+                        alert(errorMessage);
                                 
                                 // Reset button after 3 seconds
                                 setTimeout(() => {
