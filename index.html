@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cochran Films - Media Production Pitch Deck</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- ✅ Meta SEO Tags for Cochran Films Pitch Deck -->
 <title>Pitch Deck | Full-Stack Creative Services by Cochran Films</title>
@@ -317,18 +317,33 @@
             .booking-form {
                 max-width: 100%;
                 padding: 0 1rem;
+                margin: 1.5rem auto 0;
             }
 
             .form-row {
                 flex-direction: column;
-                gap: 0.75rem;
-                margin-bottom: 0.75rem;
+                gap: 1rem;
+                margin-bottom: 1rem;
             }
 
             .form-group input,
             .form-group textarea {
-                padding: 14px 18px;
-                font-size: 0.95rem;
+                padding: 16px 20px;
+                font-size: 1rem;
+                min-height: 56px;
+                border-radius: 8px;
+                border: 2px solid rgba(255, 178, 0, 0.3);
+            }
+
+            .form-group input:focus,
+            .form-group textarea:focus {
+                border: 2px solid #FFB200;
+                box-shadow: 0 0 0 3px rgba(255, 178, 0, 0.2);
+            }
+
+            .form-group textarea {
+                min-height: 120px;
+                resize: vertical;
             }
 
             .form-submit-btn {
@@ -339,13 +354,22 @@
 
             .action-buttons {
                 flex-direction: column;
-                gap: 1rem;
+                gap: 1.5rem;
+                margin: 3rem 0 !important;
+                padding: 0 1rem;
             }
 
             .action-buttons .cta-button {
                 margin: 0 !important;
                 width: 100%;
-                max-width: 280px;
+                max-width: 320px;
+                padding: 18px 24px;
+                font-size: 1.1rem;
+                font-weight: 900;
+                min-height: 56px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
         }
 
@@ -357,6 +381,16 @@
             display: flex;
             gap: 10px;
             z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+            .navigation {
+                bottom: 80px;
+                background: rgba(0, 0, 0, 0.3);
+                padding: 8px 12px;
+                border-radius: 20px;
+                backdrop-filter: blur(10px);
+            }
         }
 
         .nav-dot {
@@ -508,26 +542,49 @@
         }
 
         @media (max-width: 768px) {
+            .slide {
+                background-attachment: scroll;
+            }
+
+            .slide-overlay {
+                padding: 4rem 1.5rem 6rem;
+                min-height: 100vh;
+                justify-content: center;
+            }
+
             .slide h1 {
-                font-size: 2.5rem;
+                font-size: 2.2rem;
+                line-height: 1.2;
+                margin-bottom: 1.5rem;
+                text-align: center;
             }
             
             .slide h2 {
-                font-size: 1.8rem;
+                font-size: 1.6rem;
+                line-height: 1.3;
+                margin-bottom: 1rem;
+                text-align: center;
             }
             
             .slide p {
-                font-size: 1.1rem;
+                font-size: 1rem;
+                line-height: 1.5;
+                margin-bottom: 1.5rem;
+                max-width: 100%;
+                text-align: center;
             }
             
             .stats {
                 flex-direction: column;
                 gap: 1rem;
+                margin: 2rem auto;
+                max-width: 280px;
             }
 
             .stat {
                 padding: 1.2rem 1rem;
                 min-width: auto;
+                width: 100%;
             }
 
             .stat-number {
@@ -549,12 +606,50 @@
             }
 
             .logo {
-                height: 40px;
-                top: 20px;
-                left: 20px;
+                height: 30px;
+                top: 15px;
+                left: 15px;
+                opacity: 0.8;
+                transition: opacity 0.3s ease;
+                z-index: 9999;
             }
 
+            .logo:hover {
+                opacity: 1;
+            }
 
+            /* Fix for last slide spacing */
+            .slide:last-child .slide-overlay {
+                padding-bottom: 8rem;
+            }
+
+            /* Improve mobile touch targets */
+            .nav-dot {
+                width: 14px;
+                height: 14px;
+                margin: 0 4px;
+            }
+
+            /* Better mobile tap targets */
+            button, .cta-button, .nav-dot {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            /* Prevent text selection on mobile */
+            .slide h1, .slide h2, .slide p {
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            /* Smooth scrolling for mobile */
+            html {
+                -webkit-overflow-scrolling: touch;
+            }
         }
     </style>
 </head>
@@ -681,7 +776,7 @@
                         <div class="stat-label">Mobile Optimized</div>
                     </div>
                 </div>
-                <a href="https://www.cochranfilms.com/service-page/custom-website-design" class="cta-button">Launch Your Site</a>
+                <a href="https://www.cochranfilms.com/service-page/custom-website-design" class="cta-button">Launch My Site</a>
             </div>
         </div>
 
@@ -917,10 +1012,12 @@
                     tokenInput.value = formToken;
                     bookingForm.appendChild(tokenInput);
                     
-                    // Secure form submission
+                    // Secure form submission - Support both click and touch events for mobile
                     const submitBtn = document.querySelector('.form-submit-btn');
-                    submitBtn.addEventListener('click', function(e) {
+                    
+                    function handleFormSubmit(e) {
                         e.preventDefault();
+                        e.stopPropagation();
                         
                         // Rate limiting check
                         if (!SecurityUtils.rateLimiter.canSubmit()) {
@@ -1017,7 +1114,14 @@
                                     submitBtn.textContent = originalText;
                                 }, 3000);
                             });
-                    });
+                    }
+                    
+                    // Add multiple event listeners for mobile compatibility
+                    submitBtn.addEventListener('click', handleFormSubmit);
+                    submitBtn.addEventListener('touchend', handleFormSubmit);
+                    
+                    // Also handle form submission directly
+                    bookingForm.addEventListener('submit', handleFormSubmit);
                 }
             } catch (error) {
                 // Secure error handling for initialization
@@ -1030,6 +1134,31 @@
                     submitBtn.textContent = 'Service Unavailable';
                 }
             }
+        });
+
+        // Additional mobile optimizations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevent zoom on iOS when focusing inputs
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                const viewportMeta = document.querySelector('meta[name="viewport"]');
+                if (viewportMeta) {
+                    viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                }
+            }
+            
+            // Improve touch handling for mobile
+            const touchElements = document.querySelectorAll('.cta-button, .nav-dot');
+            touchElements.forEach(element => {
+                element.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.95)';
+                });
+                
+                element.addEventListener('touchend', function() {
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
         });
     </script>
 </body>
