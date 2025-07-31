@@ -58,7 +58,7 @@
 <link rel="icon" type="image/png" href="Favicon.png" />
     
     <!-- 🔒 SECURITY HEADERS -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; media-src 'self'; connect-src 'self' https://api.emailjs.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://api.emailjs.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://api.emailjs.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; media-src 'self'; connect-src 'self' https://api.emailjs.com https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://api.emailjs.com;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
@@ -80,7 +80,28 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" 
             integrity="sha512-nGyCjM+jb3T6sKNMCfDORADp/Xj8Pt3X1JBAq6OKqx2M9UCbN9k7+WGGUAZMOttJdj3eWb7J0y5BJ3Y8wC6Vw==" 
             crossorigin="anonymous" 
-            referrerpolicy="no-referrer"></script>
+            referrerpolicy="no-referrer"
+            onload="console.log('EmailJS script loaded successfully')"
+            onerror="console.error('EmailJS script failed to load')"></script>
+    
+    <!-- Fallback EmailJS loading -->
+    <script>
+        // Fallback if the main EmailJS script fails to load
+        setTimeout(function() {
+            if (typeof emailjs === 'undefined') {
+                console.log('EmailJS not loaded, trying fallback...');
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+                script.onload = function() {
+                    console.log('EmailJS loaded via fallback');
+                };
+                script.onerror = function() {
+                    console.error('EmailJS fallback also failed');
+                };
+                document.head.appendChild(script);
+            }
+        }, 3000);
+    </script>
     
     <style>
         @font-face {
@@ -1147,11 +1168,46 @@
 
         // Initialize secure form handling
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, checking EmailJS...');
+            
+            // Function to wait for EmailJS to load
+            function waitForEmailJS(callback, maxAttempts = 10) {
+                let attempts = 0;
+                
+                function checkEmailJS() {
+                    attempts++;
+                    console.log(`EmailJS check attempt ${attempts}/${maxAttempts}`);
+                    
+                    if (typeof emailjs !== 'undefined' && emailjs) {
+                        console.log('EmailJS found, initializing...');
+                        callback();
+                    } else if (attempts < maxAttempts) {
+                        console.log('EmailJS not ready, waiting...');
+                        setTimeout(checkEmailJS, 500);
+                    } else {
+                        console.error('EmailJS failed to load after maximum attempts');
+                        // Set up fallback
+                        const submitBtn = document.querySelector('.form-submit-btn');
+                        if (submitBtn) {
+                            submitBtn.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                alert('Email service temporarily unavailable. Please contact us directly at info@cochranfilms.com');
+                            });
+                        }
+                    }
+                }
+                
+                checkEmailJS();
+            }
+            
             try {
                 // Check if EmailJS is loaded securely
                 console.log('Checking EmailJS availability...');
                 console.log('EmailJS object:', typeof emailjs);
-                console.log('EmailJS object details:', emailjs);
+                if (typeof emailjs !== 'undefined') {
+                    console.log('EmailJS object details:', emailjs);
+                }
                 
                 // Function to initialize EmailJS
                 function initializeEmailJS() {
@@ -1373,30 +1429,8 @@
                     }
                 }
                 
-                // Check if EmailJS is available immediately
-                if (typeof emailjs === 'undefined') {
-                    console.log('EmailJS not immediately available, waiting...');
-                    setTimeout(() => {
-                        if (typeof emailjs === 'undefined') {
-                            console.error('EmailJS not loaded after waiting - will use fallback');
-                            // Set up fallback form handling
-                            const submitBtn = document.querySelector('.form-submit-btn');
-                            if (submitBtn) {
-                                submitBtn.addEventListener('click', function(e) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    alert('Email service temporarily unavailable. Please contact us directly at info@cochranfilms.com');
-                                });
-                            }
-                        } else {
-                            console.log('EmailJS loaded after waiting, initializing...');
-                            initializeEmailJS();
-                        }
-                    }, 2000); // Wait 2 seconds
-                } else {
-                    console.log('EmailJS loaded immediately, initializing...');
-                    initializeEmailJS();
-                }
+                // Use the waiting function to ensure EmailJS is loaded
+                waitForEmailJS(initializeEmailJS);
             } catch (error) {
                 // Secure error handling for initialization
                 console.error('Secure initialization failed:', error);
