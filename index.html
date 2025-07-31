@@ -121,6 +121,9 @@
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+            /* Ensure consistent slide height */
+            min-height: 100vh;
+            overflow: hidden;
         }
 
         .slide.active {
@@ -137,10 +140,14 @@
             backdrop-filter: blur(1px);
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             text-align: center;
             padding: 2rem;
+            /* Ensure content doesn't overflow */
+            overflow-y: auto;
+            /* Reserve space for navigation */
+            padding-bottom: 120px;
         }
 
         .slide h1 {
@@ -327,12 +334,19 @@
 
         .navigation {
             position: fixed;
-            bottom: 30px;
+            bottom: 40px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 10px;
-            z-index: 100;
+            gap: 8px;
+            z-index: 1000;
+            /* Ensure consistent positioning */
+            background: rgba(28, 28, 30, 0.8);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
 
@@ -494,10 +508,12 @@
             }
 
             .slide-overlay {
-                padding: calc(env(safe-area-inset-top) + 32px) 20px calc(env(safe-area-inset-bottom) + 140px); /* More bottom padding */
+                padding: calc(env(safe-area-inset-top) + 32px) 20px calc(env(safe-area-inset-bottom) + 160px); /* Reserve space for navigation */
                 min-height: 100vh;
                 justify-content: flex-start;
                 padding-top: calc(env(safe-area-inset-top) + 80px);
+                /* Ensure consistent content area */
+                box-sizing: border-box;
             }
 
             /* Apple Typography Scale - SF Pro Display equivalent */
@@ -608,18 +624,22 @@
 
             /* Form slide extra space for keyboard */
             .slide:last-child .slide-overlay {
-                padding-bottom: calc(env(safe-area-inset-bottom) + 180px); /* More space for form */
+                padding-bottom: calc(env(safe-area-inset-bottom) + 200px); /* Extra space for form */
             }
 
-            /* Apple Navigation - Better spacing and positioning */
+            /* Apple Navigation - Fixed positioning */
             .navigation {
-                bottom: calc(env(safe-area-inset-bottom) + 40px); /* More space from bottom */
-                background: rgba(28, 28, 30, 0.6); /* More transparent */
-                padding: 6px 12px; /* Smaller padding */
-                border-radius: 16px;
-                backdrop-filter: blur(15px);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                position: fixed;
+                bottom: calc(env(safe-area-inset-bottom) + 60px); /* More clearance from bottom */
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(28, 28, 30, 0.8); /* More visible */
+                padding: 8px 16px;
+                border-radius: 20px;
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                z-index: 1000; /* Ensure it's always on top */
             }
 
             /* Apple Touch Targets - Smaller, more elegant */
@@ -683,13 +703,15 @@
                 line-height: 24px;
             }
 
-            /* Apple Button Stack - Better spacing */
+            /* Apple Button Stack - Fixed positioning */
             .action-buttons {
                 flex-direction: column;
                 gap: 16px;
-                margin: 32px auto 60px !important; /* More bottom margin for navigation */
+                margin: 32px auto 80px !important; /* Extra space for navigation */
                 padding: 0 20px;
                 max-width: 335px;
+                position: relative;
+                z-index: 999; /* Below navigation */
             }
 
             .action-buttons .cta-button {
