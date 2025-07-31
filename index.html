@@ -57,8 +57,8 @@
 
 <link rel="icon" type="image/png" href="Favicon.png" />
     
-    <!-- 🔒 SECURITY HEADERS -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://api.emailjs.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; media-src 'self'; connect-src 'self' https://api.emailjs.com https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://api.emailjs.com;">
+    <!-- 🔒 SECURITY HEADERS - TEMPORARILY RELAXED FOR EMAILJS TESTING -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://api.emailjs.com https://*.emailjs.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; media-src 'self'; connect-src 'self' https://api.emailjs.com https://cdn.jsdelivr.net https://*.emailjs.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://api.emailjs.com;"> -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
@@ -86,19 +86,28 @@
     
     <!-- Fallback EmailJS loading -->
     <script>
+        // Test EmailJS loading immediately
+        console.log('Testing EmailJS availability...');
+        console.log('emailjs type:', typeof emailjs);
+        
         // Fallback if the main EmailJS script fails to load
         setTimeout(function() {
+            console.log('Checking EmailJS after timeout...');
+            console.log('emailjs type:', typeof emailjs);
             if (typeof emailjs === 'undefined') {
                 console.log('EmailJS not loaded, trying fallback...');
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
                 script.onload = function() {
                     console.log('EmailJS loaded via fallback');
+                    console.log('emailjs type after fallback:', typeof emailjs);
                 };
                 script.onerror = function() {
                     console.error('EmailJS fallback also failed');
                 };
                 document.head.appendChild(script);
+            } else {
+                console.log('EmailJS is available!');
             }
         }, 3000);
     </script>
