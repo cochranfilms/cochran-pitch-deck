@@ -943,7 +943,7 @@
                 <!-- Action Buttons -->
                 <div class="action-buttons" style="margin: 2rem 0;">
                     <a href="https://www.cochranfilms.com/pricing" class="cta-button" style="margin: 0 1rem;">PRICING</a>
-                                                <button type="submit" form="bookingForm" class="cta-button form-submit-btn" style="margin: 0 1rem;" onclick="event.stopImmediatePropagation();">BOOK NOW</button>
+                    <button type="submit" form="bookingForm" class="cta-button form-submit-btn" style="margin: 0 1rem;">BOOK NOW</button>
                 </div>
                 <p style="font-size: 1rem; opacity: 0.8;">Available for projects worldwide • Atlanta based • Remote friendly</p>
             </div>
@@ -1011,6 +1011,21 @@
             resetAutoSlide();
         }
 
+        // Prevent slide navigation when form is focused
+        document.addEventListener('keydown', function(e) {
+            const activeElement = document.activeElement;
+            const isFormField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+            const submitBtn = document.querySelector('.form-submit-btn');
+            const isSubmitting = submitBtn && submitBtn.getAttribute('data-submitting') === 'true';
+            
+            if (isFormField || isSubmitting) {
+                return; // Don't navigate slides when in form
+            }
+            
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        });
+
         function autoSlide() {
             let slides = document.getElementsByClassName("slide");
             
@@ -1045,17 +1060,7 @@
         // Start auto-advance (will stop when reaching last slide)
         slideInterval = setInterval(autoSlide, 14000);
 
-        // Keyboard navigation
-        document.addEventListener('keydown', function(e) {
-            // Don't trigger slide navigation if user is in a form field
-            const activeElement = document.activeElement;
-            const isFormField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
-            
-            if (!isFormField) {
-                if (e.key === 'ArrowLeft') changeSlide(-1);
-                if (e.key === 'ArrowRight') changeSlide(1);
-            }
-        });
+
 
         // Touch/swipe support for mobile
         let touchStartX = 0;
@@ -1065,7 +1070,8 @@
             // Don't trigger swipe if touching form elements or submitting
             const target = e.target;
             const isFormElement = target.closest('form') || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON';
-            const isSubmitting = target.getAttribute('data-submitting') === 'true';
+            const submitBtn = document.querySelector('.form-submit-btn');
+            const isSubmitting = submitBtn && submitBtn.getAttribute('data-submitting') === 'true';
             
             if (!isFormElement && !isSubmitting) {
                 touchStartX = e.changedTouches[0].screenX;
@@ -1076,7 +1082,8 @@
             // Don't trigger swipe if touching form elements or submitting
             const target = e.target;
             const isFormElement = target.closest('form') || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON';
-            const isSubmitting = target.getAttribute('data-submitting') === 'true';
+            const submitBtn = document.querySelector('.form-submit-btn');
+            const isSubmitting = submitBtn && submitBtn.getAttribute('data-submitting') === 'true';
             
             if (!isFormElement && !isSubmitting) {
                 touchEndX = e.changedTouches[0].screenX;
@@ -1143,7 +1150,16 @@
             try {
                 // Check if EmailJS is loaded securely
                 if (typeof emailjs === 'undefined') {
-                    throw new Error('EmailJS not loaded securely');
+                    console.error('EmailJS not loaded - will use fallback');
+                    // Set up fallback form handling
+                    const submitBtn = document.querySelector('.form-submit-btn');
+                    if (submitBtn) {
+                        submitBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            alert('Email service temporarily unavailable. Please contact us directly at info@cochranfilms.com');
+                        });
+                    }
+                    return;
                 }
                 
                 // Initialize EmailJS with secure configuration
@@ -1180,6 +1196,9 @@
                         
                         // Prevent any slide navigation
                         const submitBtn = e.target;
+                        if (submitBtn.getAttribute('data-submitting') === 'true') {
+                            return; // Already submitting
+                        }
                         submitBtn.setAttribute('data-submitting', 'true');
                         
                         // Disable all navigation temporarily
@@ -1257,6 +1276,12 @@
                             setTimeout(() => reject(new Error('Timeout')), 10000)
                         );
                         
+                        // Add debugging for form submission
+                        console.log('Form submission started');
+                        console.log('EmailJS initialized:', typeof emailjs !== 'undefined');
+                        console.log('Service ID:', 'service_t11yvru');
+                        console.log('Template ID:', 'template_aluwel1');
+                        
                         Promise.race([sendPromise, timeoutPromise])
                             .then(function(response) {
                                 // Success state
@@ -1291,8 +1316,14 @@
                                 submitBtn.textContent = 'Try Again';
                                 submitBtn.disabled = false;
                                 
-                                // Don't expose detailed error information
-                                alert('Unable to send message. Please try again or contact us directly at info@cochranfilms.com');
+                                // Provide more specific error feedback
+                                let errorMessage = 'Unable to send message. Please try again or contact us directly at info@cochranfilms.com';
+                                if (error.message === 'Timeout') {
+                                    errorMessage = 'Request timed out. Please check your connection and try again.';
+                                } else if (error.status === 0) {
+                                    errorMessage = 'Network error. Please check your internet connection and try again.';
+                                }
+                                alert(errorMessage);
                                 
                                 // Reset button after 3 seconds
                                 setTimeout(() => {
@@ -1323,12 +1354,10 @@
                     // Also handle form submission directly
                     bookingForm.addEventListener('submit', handleFormSubmit, true);
                     
-                    // Prevent any other event listeners from interfering
-                    submitBtn.addEventListener('click', function(e) {
-                        e.stopImmediatePropagation();
-                    }, true);
-                    
+                    // Prevent form from submitting normally
                     bookingForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
                         e.stopImmediatePropagation();
                     }, true);
                     
